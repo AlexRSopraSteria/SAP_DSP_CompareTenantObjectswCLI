@@ -93,6 +93,38 @@ From the project folder:
 py .\Model_Objects_all_tenants.py
 ```
 
+## Run on SAP BTP (Cloud Foundry)
+
+The script can run in a CF app/task container and no longer requires a fixed local folder layout.
+
+### Required runtime prerequisites
+
+- Python 3.10+
+- Datasphere CLI installed in the container image
+- Tenant secret JSON files available in a container folder
+
+### Relevant environment variables
+
+- `DSP_SECRETS_DIR` (optional, recommended on BTP)
+  - Folder containing `DSP_login_secrets_<TENANT>.json`
+- `DSP_RESULTS_DIR` (optional)
+  - Output folder for CSV + logs (default: `./results`)
+- `DATASPHERE_CLI` (optional)
+  - Explicit CLI executable/path if not discoverable via `PATH`
+
+### Example (Cloud Foundry task)
+
+```bash
+cf set-env <app-name> DSP_SECRETS_DIR /home/vcap/app/secrets
+cf set-env <app-name> DSP_RESULTS_DIR /home/vcap/app/results
+cf restage <app-name>
+cf run-task <app-name> "python Model_Objects_all_tenants.py" --name dsp-compare
+```
+
+Note:
+- Ensure your deployment process injects secret files into `DSP_SECRETS_DIR`.
+- For recurring execution, schedule `cf run-task` via SAP Job Scheduler or an external scheduler.
+
 
 ## Output
 

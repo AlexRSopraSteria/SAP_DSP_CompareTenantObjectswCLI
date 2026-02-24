@@ -10,6 +10,7 @@ to the results folder.
 import csv
 import json
 import logging
+import os
 import shutil
 import subprocess
 import sys
@@ -28,7 +29,6 @@ from constants import (
     DATASPHERE_CLI_NOT_FOUND_MESSAGE,
     LOG_FILE_PREFIX,
     OUTPUT_CSV_BASENAME,
-    PROJECT_ROOT_NOT_FOUND_MESSAGE,
     SPACE_MARKER_TYPE,
     SPACE_READ_ERROR_TECHNICAL_NAME,
     SPACE_READ_ERROR_TYPE,
@@ -47,11 +47,17 @@ def resolve_project_root(script_path: Path) -> Path:
       for `DSP_login_secrets`.
     """
 
+    override_root = os.environ.get("DSP_PROJECT_ROOT", "").strip()
+    if override_root:
+        override_path = Path(override_root).expanduser().resolve()
+        if override_path.is_dir():
+            return override_path
+
     for candidate in [script_path.parent, *script_path.parents]:
         if (candidate / "DSP_login_secrets").is_dir():
             return candidate
 
-    raise FileNotFoundError(PROJECT_ROOT_NOT_FOUND_MESSAGE)
+    return script_path.parent
 
 
 def resolve_datasphere_cli() -> str:
@@ -60,6 +66,15 @@ def resolve_datasphere_cli() -> str:
 
     On Windows, the npm CLI is often installed as `datasphere.cmd`.
     """
+
+    configured_cli = os.environ.get("DATASPHERE_CLI", "").strip()
+    if configured_cli:
+        executable = shutil.which(configured_cli)
+        if executable:
+            return executable
+        configured_path = Path(configured_cli)
+        if configured_path.exists():
+            return str(configured_path)
 
     candidates = ["datasphere"]
     if sys.platform.startswith("win"):
@@ -81,8 +96,8 @@ def get_datasphere_cli() -> str:
 
 
 PROJECT_ROOT = resolve_project_root(Path(__file__).resolve())
-SECRETS_DIR = PROJECT_ROOT / "DSP_login_secrets"
-RESULTS_DIR = PROJECT_ROOT / "results"
+SECRETS_DIR = Path(os.environ.get("DSP_SECRETS_DIR", str(PROJECT_ROOT / "DSP_login_secrets"))).expanduser().resolve()
+RESULTS_DIR = Path(os.environ.get("DSP_RESULTS_DIR", str(PROJECT_ROOT / "results"))).expanduser().resolve()
 LOGS_DIR = RESULTS_DIR / "Logs"
 LOGGER = logging.getLogger("sap_dsp_comparespaces")
 
@@ -264,6 +279,12 @@ def extract_tenant_from_filename(file_path: Path) -> str:
 
 def load_tenant_configs(secrets_dir: Path) -> list[TenantConfig]:
     """Load all tenant configurations from the secrets directory."""
+
+    if not secrets_dir.exists() or not secrets_dir.is_dir():
+        raise FileNotFoundError(
+            f"Secrets directory does not exist: {secrets_dir}. "
+            "Set DSP_SECRETS_DIR to the folder containing DSP_login_secrets_<TENANT>.json files."
+        )
 
     secret_files = sorted(secrets_dir.glob("DSP_login_secrets_*.json"))
     if not secret_files:
