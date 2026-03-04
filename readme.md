@@ -85,6 +85,89 @@ Important:
 - Other fields depend on your Datasphere CLI authentication flow.
 - Keep real secret values only in `DSP_login_secrets/*.json` (already ignored by `.gitignore`).
 
+### Retrieving Tenant Secrets
+Tenant Secrets can be obtained using two supported approaches.
+Both options produce the values required for the DSP_login_secrets_<TENANT>.json files (Access Token, Refresh Token, Authorization/Token URLs, etc.).
+
+#### Option 1: Via Datasphere CLI login
+Use this option when a local CLI login is available.
+
+Authenticate against the tenant:
+```text
+datasphere login
+```
+
+Display the locally stored authentication secrets:
+```text
+datasphere config secrets show
+```
+
+The output includes:
+
+- access_token
+- refresh_token
+- authorization_url
+- token_url
+- additional CLI‑managed metadata
+
+
+Copy the relevant fields into the corresponding DSP_login_secrets_<TENANT>.json file.
+Notes:
+
+- Secrets are stored locally by the CLI (not retrieved from Datasphere).
+- Values remain valid until expired or overwritten by a new login.
+
+
+#### Option 2: Via OAuth Authorization Code Flow (e.g. BAS, Postman)
+Use this option when tokens must be retrieved without relying on the CLI or Browser (e.g. for BAS).
+
+Request an Authorization Code via browser redirect:
+
+Open the IAS authorize endpoint:
+```text
+https://<ias-tenant>/oauth/authorize?response_type=code&client_id=<CLIENT_ID>&redirect_uri=<REDIRECT_URI>&scope=openid
+```
+
+
+Log in and capture the code returned in the redirect URL. In the URL search for: 
+```text
+?code=<AUTHORIZATION_CODE>
+```
+
+Exchange the code for tokens using the IAS token endpoint (e.g. Postman):
+```text
+POST https://<ias-tenant>/oauth/token
+```
+
+Header: 
+```text
+Content-Type: application/x-www-form-urlencoded
+```
+
+Body (x-www-form-urlencoded):
+```text
+  grant_type=authorization_code
+  code=<AUTHORIZATION_CODE>
+  redirect_uri=<REDIRECT_URI>
+  client_id=<CLIENT_ID>
+  client_secret=<CLIENT_SECRET>
+```
+
+
+The response includes:
+
+- access_token
+- refresh_token
+- token_type, expires_in, scopes
+
+
+Store the resulting values in DSP_login_secrets_<TENANT>.json.
+Optional:
+
+- New Access Tokens can be generated using grant_type=refresh_token if refresh tokens are allowed.
+
+
+
 ## Run
 
 From the project folder:
