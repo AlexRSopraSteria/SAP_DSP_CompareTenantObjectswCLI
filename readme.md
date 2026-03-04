@@ -52,6 +52,98 @@ Typical use case:
   - On Windows this is usually `datasphere.cmd`
 - Valid secret files for each tenant
 
+## Useful Terminal Commands
+
+### Check versions
+Checks whether Node.js and npm are installed and shows their active versions.
+
+```bash
+node -v
+npm -v
+```
+
+### Install SAP Datasphere CLI
+Installs SAP Datasphere CLI globally via npm.
+
+```bash
+npm install -g @sap/datasphere-cli
+```
+
+### Verify CLI version
+Verifies that Datasphere CLI is installed correctly.
+
+```bash
+datasphere --version
+```
+
+### Login (interactive)
+Starts an interactive login against the tenant.
+
+```bash
+datasphere login
+```
+
+### Required fields for JSON
+Shows locally stored secret fields for the JSON file.
+
+```bash
+datasphere config secrets show
+```
+
+### Clean config
+Cleans host, cache, and secret configuration in the CLI.
+
+```bash
+datasphere config host clean
+datasphere config cache clean
+datasphere config secrets reset
+```
+
+### Optional: Create Python environment
+Creates and activates an optional Python virtual environment.
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+### Install Git (Debian/Ubuntu-based BAS images)
+Installs Git in Debian/Ubuntu-based environments.
+
+```bash
+sudo apt-get update
+sudo apt-get install -y git
+```
+
+### Check Git version
+Checks whether Git is available and shows its version.
+
+```bash
+git --version
+```
+
+### Configure Git user
+Sets name and email globally for Git commits.
+
+```bash
+git config --global user.name ""
+git config --global user.email ""
+```
+
+### Clone repository (example)
+Clones a repository via HTTPS.
+
+```bash
+git clone https://github.com/REPO.git
+```
+
+### Change to repository directory
+Changes into the local repository folder.
+
+```bash
+cd REPO
+```
+
 ## Tenant Secrets
 
 Filename convention:
@@ -110,13 +202,11 @@ The output includes:
 - token_url
 - additional CLI‑managed metadata
 
-
 Copy the relevant fields into the corresponding DSP_login_secrets_<TENANT>.json file.
 Notes:
 
 - Secrets are stored locally by the CLI (not retrieved from Datasphere).
 - Values remain valid until expired or overwritten by a new login.
-
 
 #### Option 2: Via OAuth Authorization Code Flow (e.g. BAS, Postman)
 Use this option when tokens must be retrieved without relying on the CLI or Browser (e.g. for BAS).
@@ -128,8 +218,7 @@ Open the IAS authorize endpoint:
 https://<ias-tenant>/oauth/authorize?response_type=code&client_id=<CLIENT_ID>&redirect_uri=<REDIRECT_URI>&scope=openid
 ```
 
-
-Log in and capture the code returned in the redirect URL. In the URL search for: 
+Log in and capture the code returned in the redirect URL. In the URL search for:
 ```text
 ?code=<AUTHORIZATION_CODE>
 ```
@@ -139,7 +228,7 @@ Exchange the code for tokens using the IAS token endpoint (e.g. Postman):
 POST https://<ias-tenant>/oauth/token
 ```
 
-Header: 
+Header:
 ```text
 Content-Type: application/x-www-form-urlencoded
 ```
@@ -153,20 +242,16 @@ Body (x-www-form-urlencoded):
   client_secret=<CLIENT_SECRET>
 ```
 
-
 The response includes:
 
 - access_token
 - refresh_token
 - token_type, expires_in, scopes
 
-
 Store the resulting values in DSP_login_secrets_<TENANT>.json.
 Optional:
 
 - New Access Tokens can be generated using grant_type=refresh_token if refresh tokens are allowed.
-
-
 
 ## Run
 
@@ -207,7 +292,6 @@ cf run-task <app-name> "python Model_Objects_all_tenants.py" --name dsp-compare
 Note:
 - Ensure your deployment process injects secret files into `DSP_SECRETS_DIR`.
 - For recurring execution, schedule `cf run-task` via SAP Job Scheduler or an external scheduler.
-
 
 ## Output
 
